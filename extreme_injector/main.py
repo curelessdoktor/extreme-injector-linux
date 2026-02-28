@@ -10,7 +10,6 @@ import sys
 from pathlib import Path
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor, QPalette, QIcon, QAction
 from PyQt6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -28,15 +27,17 @@ from PyQt6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QAbstractItemView,
+    QMenu,
 )
-
 
 # Colors matching Extreme Injector
 BG_BLUE = "#1E90FF"
 BUTTON_BG = "#D3D3D3"
 BUTTON_TEXT = "#333333"
 LABEL_COLOR = "#FFFFFF"
-LIST_HEADER_COLOR = "#333333"
+
+CONFIG_DIR = Path.home() / ".config" / "extreme_injector"
+CONFIG_FILE = CONFIG_DIR / "state"
 
 
 def get_running_processes():
@@ -64,12 +65,38 @@ def get_running_processes():
     return procs
 
 
+def load_last_process():
+    """Return (pid, name) or (None, None)."""
+    try:
+        if CONFIG_FILE.is_file():
+            raw = CONFIG_FILE.read_text().strip()
+            if raw:
+                # format: "pid\tname" or "pid"
+                parts = raw.split("\t", 1)
+                return parts[0], (parts[1] if len(parts) > 1 else f"pid{parts[0]}")
+    except Exception:
+        pass
+    return None, None
+
+
+def save_last_process(pid, name):
+    try:
+        CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+        CONFIG_FILE.write_text(f"{pid}\t{name}")
+    except Exception:
+        pass
+
+
 class ProcessSelectDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Select Process")
-        self.setMinimumSize(400, 400)
+        self.setMinimumSize(380, 360)
         layout = QVBoxLayout(self)
+        self.filter_edit = QLineEdit()
+        self.filter_edit.setPlaceholderText("Filter by name or PID...")
+        self.filter_edit.textChanged.connect(self._apply_filter)
+        layout.addWidget(self.filter_edit)
         self.list_widget = QListWidget()
         self.list_widget.setAlternatingRowColors(True)
         self.list_widget.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
@@ -83,13 +110,20 @@ class ProcessSelectDialog(QDialog):
         self.list_widget.itemDoubleClicked.connect(self.accept)
         self._pid = None
         self._name = None
+        self._all_procs = []
 
     def set_processes(self, procs):
+        self._all_procs = procs
+        self._apply_filter()
+
+    def _apply_filter(self):
         self.list_widget.clear()
-        for pid, name in procs:
-            item = QListWidgetItem(f"{name} (PID {pid})")
-            item.setData(Qt.ItemDataRole.UserRole, (pid, name))
-            self.list_widget.addItem(item)
+        q = (self.filter_edit.text() or "").strip().lower()
+        for pid, name in self._all_procs:
+            if not q or q in name.lower() or q in pid:
+                item = QListWidgetItem(f"{name} (PID {pid})")
+                item.setData(Qt.ItemDataRole.UserRole, (pid, name))
+                self.list_widget.addItem(item)
 
     def selected(self):
         row = self.list_widget.currentRow()
@@ -158,7 +192,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Extreme Injector v1 by curelessdoktor")
-        self.setMinimumSize(520, 420)
+        self.setMinimumSize(480, 380)
         self.setStyleSheet(f"""
             QMainWindow, QWidget {{
                 background-color: {BG_BLUE};
@@ -202,8 +236,8 @@ class MainWindow(QMainWindow):
         central = QWidget()
         self.setCentralWidget(central)
         layout = QVBoxLayout(central)
-        layout.setSpacing(10)
-        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(8)
+        layout.setContentsMargins(10, 10, 10, 10)
 
         # Process name row
         proc_row = QHBoxLayout()
@@ -220,17 +254,14 @@ class MainWindow(QMainWindow):
         group = QGroupBox("Inject List")
         group_layout = QHBoxLayout(group)
         left_btns = QVBoxLayout()
-        left_btns.setSpacing(6)
+        left_btns.setSpacing(4)
         add_btn = QPushButton("Add SO")
         add_btn.clicked.connect(self._on_add_so)
-        enable_btn = QPushButton("Enable/Disable")
-        enable_btn.clicked.connect(self._on_enable_disable)
         remove_btn = QPushButton("Remove")
         remove_btn.clicked.connect(self._on_remove)
         clear_btn = QPushButton("Clear")
         clear_btn.clicked.connect(self._on_clear)
         left_btns.addWidget(add_btn)
-        left_btns.addWidget(enable_btn)
         left_btns.addWidget(remove_btn)
         left_btns.addWidget(clear_btn)
         left_btns.addStretch()
@@ -241,9 +272,11 @@ class MainWindow(QMainWindow):
         list_col = QVBoxLayout()
         list_col.addWidget(list_header)
         self.list_widget = QListWidget()
-        self.list_widget.setMinimumHeight(200)
+        self.list_widget.setMinimumHeight(180)
         self.list_widget.setAlternatingRowColors(True)
         self.list_widget.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.list_widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.list_widget.customContextMenuRequested.connect(self._on_list_context_menu)
         list_col.addWidget(self.list_widget, 1)
         group_layout.addLayout(list_col, 1)
         layout.addWidget(group)
@@ -265,6 +298,12 @@ class MainWindow(QMainWindow):
         self._pid = None
         self._process_name = None
         self._inject_binary = self._default_inject_path()
+        # Restore last process
+        last_pid, last_name = load_last_process()
+        if last_pid and last_name:
+            self._pid = last_pid
+            self._process_name = last_name
+            self.process_edit.setText(f"{self._process_name} (PID {self._pid})")
 
     def _default_inject_path(self):
         base = Path(__file__).resolve().parent
@@ -278,6 +317,24 @@ class MainWindow(QMainWindow):
             self._pid = dlg._pid
             self._process_name = dlg._name
             self.process_edit.setText(f"{self._process_name} (PID {self._pid})")
+            save_last_process(self._pid, self._process_name)
+
+    def _on_list_context_menu(self, pos):
+        item = self.list_widget.itemAt(pos)
+        if not item:
+            return
+        menu = QMenu(self)
+        menu.addAction("Toggle enabled", lambda: self._toggle_enabled(item))
+        menu.addAction("Remove", lambda: self.list_widget.takeItem(self.list_widget.row(item)))
+        menu.exec(self.list_widget.mapToGlobal(pos))
+
+    def _toggle_enabled(self, item):
+        data = item.data(Qt.ItemDataRole.UserRole) or {}
+        data["enabled"] = not data.get("enabled", True)
+        item.setData(Qt.ItemDataRole.UserRole, data)
+        font = item.font()
+        font.setStrikeOut(not data["enabled"])
+        item.setFont(font)
 
     def _on_add_so(self):
         path, _ = QFileDialog.getOpenFileName(
@@ -290,16 +347,6 @@ class MainWindow(QMainWindow):
             item = QListWidgetItem(path)
             item.setData(Qt.ItemDataRole.UserRole, {"path": path, "enabled": True})
             self.list_widget.addItem(item)
-
-    def _on_enable_disable(self):
-        for item in self.list_widget.selectedItems():
-            data = item.data(Qt.ItemDataRole.UserRole) or {}
-            data["enabled"] = not data.get("enabled", True)
-            item.setData(Qt.ItemDataRole.UserRole, data)
-            # Visual: strikethrough or normal
-            font = item.font()
-            font.setStrikeOut(not data["enabled"])
-            item.setFont(font)
 
     def _on_remove(self):
         for item in self.list_widget.selectedItems():
@@ -388,6 +435,7 @@ class MainWindow(QMainWindow):
                 "Inject",
                 f"Injected {count} library/libraries.",
             )
+            save_last_process(self._pid, self._process_name or f"pid{self._pid}")
         if errors:
             QMessageBox.warning(
                 self,
