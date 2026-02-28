@@ -1,4 +1,4 @@
-# Extreme Injector v1
+# Extreme Injector
 
 Linux .so injector — inject shared libraries into running processes. Coded for fun.
 
