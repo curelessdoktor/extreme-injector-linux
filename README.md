@@ -1,6 +1,4 @@
-<<<<<<< HEAD
 # Extreme Injector v1
-
 Linux .so injector — inject shared libraries into running processes. Coded for fun.
 
 GUI in the style of the classic Extreme Injector: pick a process, add `.so` files, click Inject.
