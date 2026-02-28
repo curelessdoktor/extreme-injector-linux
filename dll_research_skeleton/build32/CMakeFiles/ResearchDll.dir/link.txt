@@ -1,0 +1,3 @@
+/usr/bin/cmake -E rm -f CMakeFiles/ResearchDll.dir/objects.a
+/usr/bin/i686-w64-mingw32-ar qc CMakeFiles/ResearchDll.dir/objects.a @CMakeFiles/ResearchDll.dir/objects1.rsp
+/usr/bin/i686-w64-mingw32-g++ -O3 -DNDEBUG -shared -o libResearchDll.dll -Wl,--out-implib,libResearchDll.dll.a -Wl,--major-image-version,0,--minor-image-version,0 -Wl,--whole-archive CMakeFiles/ResearchDll.dir/objects.a -Wl,--no-whole-archive @CMakeFiles/ResearchDll.dir/linkLibs.rsp

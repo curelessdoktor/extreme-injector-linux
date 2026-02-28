@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.open-meteo.com https://nominatim.openstreetmap.org;" />
+  <title>Chronos Weather</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <div class="noise"></div>
+    <div class="gradient-orb gradient-orb--1"></div>
+    <div class="gradient-orb gradient-orb--2"></div>
+    <div class="gradient-orb gradient-orb--3"></div>
+
+    <header class="header">
+      <div class="date" id="date"></div>
+      <div class="location" id="location">
+        <span class="location__pin"></span>
+        <span id="location-name">Getting location…</span>
+      </div>
+    </header>
+
+    <main class="main">
+      <div class="clock">
+        <div class="clock__digits">
+          <span class="clock__digit" id="hour-tens">0</span>
+          <span class="clock__digit" id="hour-ones">0</span>
+          <span class="clock__separator">:</span>
+          <span class="clock__digit" id="min-tens">0</span>
+          <span class="clock__digit" id="min-ones">0</span>
+          <span class="clock__separator clock__separator--sec">:</span>
+          <span class="clock__digit clock__digit--sec" id="sec-tens">0</span>
+          <span class="clock__digit clock__digit--sec" id="sec-ones">0</span>
+        </div>
+        <div class="clock__ampm" id="ampm"></div>
+      </div>
+
+      <section class="weather glass">
+        <div class="weather__icon-wrap">
+          <div class="weather__icon" id="weather-icon"></div>
+          <div class="weather__icon-bg"></div>
+        </div>
+        <div class="weather__main">
+          <div class="weather__temp">
+            <span class="weather__temp-value" id="temp">--</span>
+            <span class="weather__temp-unit">°C</span>
+          </div>
+          <div class="weather__desc" id="weather-desc">Loading…</div>
+          <div class="weather__meta">
+            <span class="weather__meta-item" id="humidity">--% humidity</span>
+            <span class="weather__meta-item" id="wind">-- km/h wind</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="drag-region"></div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

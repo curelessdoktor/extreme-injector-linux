@@ -1,0 +1,11 @@
+{
+  "category.execute_mod": "Execute",
+  "key.execute_mod.menu": "Open Menu",
+  "key.execute_mod.fly": "Toggle Fly",
+  "key.execute_mod.esp": "Toggle ESP",
+  "execute_mod.menu_title": "Execute",
+  "execute_mod.fly_on": "Fly: ON",
+  "execute_mod.fly_off": "Fly: OFF",
+  "execute_mod.esp_on": "ESP: ON",
+  "execute_mod.esp_off": "ESP: OFF"
+}

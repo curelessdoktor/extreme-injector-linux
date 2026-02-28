@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "execute_mod",
+  "version": "${version}",
+  "name": "Execute",
+  "description": "Fly, ESP, speed controls with a smooth animated menu.",
+  "authors": ["Execute"],
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["com.execute.execute_mod.ExecuteMod"],
+    "client": ["com.execute.execute_mod.ExecuteModClient"]
+  },
+  "depends": {
+    "fabricloader": ">=0.18.0",
+    "minecraft": "~1.21.11",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

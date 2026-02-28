@@ -1,0 +1,8 @@
+/home/doktordestrukt/Desktop/Execute/unity_mono_lab/build-win/CMakeFiles/UnityMonoLab.dir
+/home/doktordestrukt/Desktop/Execute/unity_mono_lab/build-win/CMakeFiles/minhook.dir
+/home/doktordestrukt/Desktop/Execute/unity_mono_lab/build-win/CMakeFiles/edit_cache.dir
+/home/doktordestrukt/Desktop/Execute/unity_mono_lab/build-win/CMakeFiles/rebuild_cache.dir
+/home/doktordestrukt/Desktop/Execute/unity_mono_lab/build-win/CMakeFiles/list_install_components.dir
+/home/doktordestrukt/Desktop/Execute/unity_mono_lab/build-win/CMakeFiles/install.dir
+/home/doktordestrukt/Desktop/Execute/unity_mono_lab/build-win/CMakeFiles/install/local.dir
+/home/doktordestrukt/Desktop/Execute/unity_mono_lab/build-win/CMakeFiles/install/strip.dir

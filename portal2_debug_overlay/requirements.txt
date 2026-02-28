@@ -1,0 +1,4 @@
+dearpygui==1.11.1
+psutil>=5.9
+pygame>=2.1.0
+

@@ -1,0 +1,3 @@
+/usr/bin/cmake -E rm -f CMakeFiles/TestHarness.dir/objects.a
+/usr/bin/i686-w64-mingw32-ar qc CMakeFiles/TestHarness.dir/objects.a @CMakeFiles/TestHarness.dir/objects1.rsp
+/usr/bin/i686-w64-mingw32-g++ -O3 -DNDEBUG -Wl,--whole-archive CMakeFiles/TestHarness.dir/objects.a -Wl,--no-whole-archive -o TestHarness.exe -Wl,--out-implib,libTestHarness.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles/TestHarness.dir/linkLibs.rsp

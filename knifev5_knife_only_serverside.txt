@@ -1,0 +1,86 @@
+================================================================================
+KNIFE SERVERSIDE - SETUP (so everybody can see the knife)
+================================================================================
+
+1. In Roblox Studio:
+   - Open ReplicatedStorage.
+   - Create a RemoteEvent: Insert Object -> RemoteEvent.
+   - Name it exactly:  KnifeRemote
+
+2. Scripts to add:
+   - CLIENT: A LocalScript (StarterPlayer -> StarterPlayerScripts, or inside StarterCharacterScripts).
+   - SERVER: A normal Script in ServerScriptService.
+
+Copy the CLIENT SCRIPT below into the LocalScript.
+Copy the SERVER SCRIPT below into the Script.
+
+The client only handles input (Z = equip/unequip, Click = grab/kill) and fires the remote.
+The server runs all knife logic and creates the knife in the player's character, so it replicates to everyone.
+
+================================================================================
+CLIENT SCRIPT (LocalScript in StarterPlayerScripts or StarterCharacterScripts)
+================================================================================
+
+-- remade by curelessdoktor optimising stuff, have fun skids. (client – input only, kill only)
+-- Z = equip/unequip. Click = swing to grab (blade touch) or kill if holding. Like knifev5: no raycast, server uses Touched.
+
+local Players = game:GetService('Players')
+local UserInputService = game:GetService('UserInputService')
+local ReplicatedStorage = game:GetService('ReplicatedStorage')
+
+local player = Players.LocalPlayer
+local KnifeRemote = ReplicatedStorage:WaitForChild('KnifeRemote')
+
+local equipped = false
+local clientGrabbed = nil
+local lastGrabTime = 0
+local GRAB_COOLDOWN = 0.8
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.Z then
+		if gameProcessed then return end
+		if equipped then
+			KnifeRemote:FireServer('Unequip')
+			equipped = false
+		else
+			KnifeRemote:FireServer('Equip')
+			equipped = true
+		end
+		return
+	end
+	if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+	if not equipped then return end
+	if clientGrabbed then
+		KnifeRemote:FireServer('Kill')
+		clientGrabbed = nil
+	else
+		if tick() - lastGrabTime < GRAB_COOLDOWN then return end
+		lastGrabTime = tick()
+		KnifeRemote:FireServer('Grab')
+	end
+end)
+
+KnifeRemote.OnClientEvent:Connect(function(event)
+	if event == 'Grabbed' then
+		clientGrabbed = true
+	elseif event == 'Released' or event == 'Killed' then
+		clientGrabbed = nil
+	elseif event == 'Equipped' then
+		equipped = true
+	elseif event == 'Unequipped' then
+		equipped = false
+	end
+end)
+
+player.CharacterAdded:Connect(function()
+	equipped = false
+	clientGrabbed = nil
+end)
+
+================================================================================
+SERVER SCRIPT (Script in ServerScriptService)
+================================================================================
+
+Copy everything below into a new Script in ServerScriptService.
+Create the RemoteEvent "KnifeRemote" in ReplicatedStorage first (see top of this file).
+

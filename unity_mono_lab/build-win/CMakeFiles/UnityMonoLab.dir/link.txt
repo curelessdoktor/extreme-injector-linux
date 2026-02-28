@@ -1,0 +1,3 @@
+/usr/bin/cmake -E rm -f CMakeFiles/UnityMonoLab.dir/objects.a
+/usr/bin/x86_64-w64-mingw32-ar qc CMakeFiles/UnityMonoLab.dir/objects.a @CMakeFiles/UnityMonoLab.dir/objects1.rsp
+/usr/bin/x86_64-w64-mingw32-g++ -O3 -DNDEBUG -static -static-libgcc -static-libstdc++ -shared -o libUnityMonoLab.dll -Wl,--out-implib,libUnityMonoLab.dll.a -Wl,--major-image-version,0,--minor-image-version,0 -Wl,--whole-archive CMakeFiles/UnityMonoLab.dir/objects.a -Wl,--no-whole-archive @CMakeFiles/UnityMonoLab.dir/linkLibs.rsp

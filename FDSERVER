@@ -1,0 +1,118 @@
+-- made by cureless doktor
+
+wait()
+script:Destroy()
+
+local RS = game:GetService("ReplicatedStorage")
+local cooldown = 2
+local playerindex, instanceindex, blacklist, moved, newparentt, alredyy, chatblacklist = {}, {}, {}, {}, {}, {}, {}
+local fixparts, checked, checked2 = {}, {}, {}
+createdonserver = {}
+ez = nil
+
+local foldermain = Instance.new("Folder", RS)
+foldermain.Name = "FD"
+local fdpart = Instance.new("Part", foldermain)
+fdpart.Anchored = true
+fdpart.Name = "FDPart"
+local Storage = Instance.new("Folder", foldermain)
+Storage.Name = "Storage"
+local remote = Instance.new("RemoteFunction", foldermain)
+remote.Name = "FD"
+local remote2 = Instance.new("RemoteEvent", foldermain)
+remote2.Name = "FD2"
+
+local function find(tbl, obj)
+	for i, v in pairs(tbl) do if v == obj then return i end end
+	return false
+end
+
+local function checklol(Obj)
+	if find(checked2, Obj) then return false end
+	local lol = false
+	if Obj:IsA("Weld") or Obj:IsA("Motor6D") then lol = true end
+	local function mark(desc)
+		for _, v in pairs(desc) do
+			if (v:IsA("Weld") or v:IsA("Motor6D")) and (v.Part1 == Obj or v.Part0 == Obj) then lol = true end
+		end
+	end
+	mark(Obj:GetDescendants())
+	local model = Obj:FindFirstAncestorWhichIsA("Model")
+	if model and model.ClassName == "Model" then mark(model:GetDescendants()) end
+	if not lol then return false end
+	if not find(fixparts, Obj) then table.insert(fixparts, Obj) table.insert(checked2, Obj) end
+	for _, v in pairs(Obj:GetDescendants()) do
+		if (v:IsA("Weld") or v:IsA("Motor6D")) and not find(fixparts, v) and not find(checked2, v) then
+			table.insert(fixparts, v) table.insert(checked2, v)
+		end
+	end
+	if model and model.ClassName == "Model" then
+		for _, v in pairs(model:GetDescendants()) do
+			if not find(fixparts, v) and not find(checked2, v) then table.insert(fixparts, v) table.insert(checked2, v) end
+		end
+	end
+	return true
+end
+
+remote.OnServerInvoke = function(client, Arg, InstanceClass, FullName, Parent, Instancee)
+	ez = nil
+	if InstanceClass == "TouchTransmitter" then return "Fail" end
+	if Arg ~= "EasyCreation" or Instancee ~= nil or FullName == nil then return "Fail" end
+	local a = Instance.new(InstanceClass, fdpart)
+	a.Name = Parent
+	if a:IsA("BasePart") then a.Position = Vector3.new(3000, 5000, 3000) a.Anchored = true end
+	table.insert(playerindex, {client, a})
+	table.insert(instanceindex, a)
+	table.insert(newparentt, {a, FullName})
+	return a
+end
+
+remote2.OnServerEvent:Connect(function(client, Arg, InstanceClass)
+	pcall(function()
+		if Arg ~= "Property" then return end
+		for _, v in pairs(InstanceClass) do
+			pcall(function()
+				local Var, Obj, setto = v[2], v[1], v[3]
+				local skip = (Var == "TimePosition")
+				if not find(checked, Obj) then table.insert(checked, Obj) checklol(Obj) end
+				if find(fixparts, Obj) then
+					local isMoveProp = Var == "Origin Position" or Var == "Origin Orientation" or Var == "World Pivot Position" or Var == "Origin World Pivot Orientation" or Var == "RotVelocity" or Var == "Velocity" or Var == "CFrame" or Var == "Position" or Var == "MaxVelocity" or Var == "CurrentAngle" or Var == "Axis" or Var == "SecondaryAxis" or Var == "WorldSecondaryAxis" or Var == "WorldCFrame" or Var == "C0" or Var == "C1"
+					if isMoveProp and (string.match(Obj.ClassName, "Part") or Obj:IsA("Model") or Obj:IsA("Weld") or Obj:IsA("Attachment") or Obj:IsA("Motor6D")) then
+						local inWorkspace = Obj:IsDescendantOf(workspace) or (game:GetService("Players"):FindFirstChild(Obj.Name) and Obj:IsA("Model") and Obj.Parent == workspace)
+						if inWorkspace and find(moved, Obj) then skip = true
+						elseif inWorkspace then table.insert(moved, Obj) end
+					end
+				end
+				for _, p in pairs(playerindex) do
+					if p[2] == Obj and client ~= p[1] and Var ~= "Text" and Var ~= "Health" and Var ~= "DisplayName" and Var ~= "Name" and Var ~= "BrickColor" then skip = true end
+				end
+				if Var == "C0" or Var == "C1" or Var == "CFrame" or string.match(Var, "Origin") then
+					if find(alredyy, Obj) then skip = true else table.insert(alredyy, Obj) end
+				end
+				if find(instanceindex, Obj) and Var == "Parent" and setto == Storage then skip = true end
+				if not skip then Obj[Var] = setto end
+			end)
+		end
+	end)
+end)
+
+local testt = 0
+while true do
+	wait(0.1)
+	testt = testt + 0.1
+	for i = #newparentt, 1, -1 do
+		local v = newparentt[i]
+		v[1].Parent = v[2]
+		table.remove(newparentt, i)
+	end
+	if testt >= cooldown then
+		alredyy = {}
+		testt = 0
+		for i = #blacklist, 1, -1 do
+			if not blacklist[i]:IsDescendantOf(game) then table.remove(blacklist, i) end
+		end
+		moved = {}
+		remote2:FireAllClients(blacklist)
+		chatblacklist = {}
+	end
+end

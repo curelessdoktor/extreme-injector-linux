@@ -1,0 +1,10 @@
+{
+  "Id": "RealisticDamage",
+  "DisplayName": "Realistic Damage & Organ Failure",
+  "Version": "1.0.0",
+  "AssemblyName": "RealisticDamage",
+  "Author": "Mod",
+  "VersionDependencies": {},
+  "EntryPoint": "Mod.Mod",
+  "Scripts": ["script.cs"]
+}

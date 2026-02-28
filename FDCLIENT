@@ -1,0 +1,286 @@
+-- made by cureless doktor
+
+wait()
+script:Destroy()
+print("Client successfully loaded.")
+
+local RS = game:GetService("ReplicatedStorage")
+local remote = RS:WaitForChild("FD"):WaitForChild("FD")
+local remote2 = RS:WaitForChild("FD"):WaitForChild("FD2")
+local plr = game:GetService("Players").LocalPlayer
+local gui = plr.PlayerGui
+local pack = plr.Backpack
+local char = plr.Character
+local Storage = RS:WaitForChild("FD").Storage
+local cooldown = 0.1
+local Data = {"RiseVelocity","Opacity","VelocityInheritance","WindAffectsDrag","TimeScale","LockedToPart","Acceleration","ShapeStyle","ShapeInOut","SpreadAngle","Speed","RotSpeed","Rate","Lifetime","EmissionDirection","ZOffset","Squash","Volume","Brightness","PantsTemplate","ShirtTemplate","BackSurface","BottomSurface","LeftSurface","RightSurface","TopSurface","FrontSurface","MoonTextureId","TextureId","SkyboxBk","SkyboxDn","SkyboxFt","SkyboxLf","SkyboxRt","SkyboxUp","StarCount","SunAngularSize","SunTextureId","MeshType","VertexColor","CastShadow","PivotOffset","WorldPivot","Size","Position","CFrame","SoundId","Name","BrickColor","Color","Transparency","Orientation","Anchored","Rotation","Health","DisplayName","C0","C1","Part0","Part1","MeshId","Texture","Face","ZIndex","DisplayDistanceType","RigType","WalkSpeed","MaxHealth","HipHeight","Disabled","Enabled","JumpPower","Text","BackgroundColor","TextColor3","BorderColor3","Scale","Offset","Active","PrimaryPart","Reflectance","Massless","CanCollide","Material","Shape","CollisionGroup","CanTouch","BinType","ExtentsOffset","MaxDistance","ResetOnSpawn","SizeOffset","StudsOffset","AnchorPoint","AutomaticSize","BackgroundTransparency","LayoutOrder","BorderMode","BorderSizePixel","Active","SizeConstraint","Visible","Image","ImageColor3","ImageRectSize","ImageRectOffset","ImageTransparency","ResampleMode","ScaleType","AlwaysOnTop","Brightness","PlayerToHideFrom","Playing","Value"}
+local savedu = false
+
+local antimoveparent, index, serverindex, queue, failed, ignore, isserverinstance, people, anti, characters, aaa, blacklist, belongsinstorage = {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}
+
+local function find(tbl, obj)
+	for i, v in pairs(tbl) do
+		if v == obj then return i end
+	end
+	return false
+end
+
+remote.OnClientInvoke = function(Obj, Var, setto)
+	for i, v in pairs(serverindex) do
+		if v[2] == Obj then v[1][Var] = setto end
+	end
+end
+
+local function removeFromQueue(ref, prop)
+	for i = #queue, 1, -1 do
+		if queue[i][2] == prop and queue[i][1] == ref then table.remove(queue, i) end
+	end
+end
+
+function updateproperties(Object, ref)
+	if not Object:IsDescendantOf(game) then return end
+	pcall(function()
+		for _, a in pairs(Data) do
+			if find(isserverinstance, Object) then continue end
+			if a == "Parent" then continue end
+			pcall(function()
+				if Object[a] == ref[a] then return end
+				local entry
+				if find(index, Object[a]) then
+					local num = find(index, Object[a])
+					entry = {ref, a, serverindex[num][2], Object}
+				else
+					entry = {ref, a, Object[a], Object}
+				end
+				removeFromQueue(ref, a)
+				table.insert(queue, entry)
+			end)
+		end
+	end)
+end
+
+function partchanged(Object, ref, property)
+	pcall(function()
+		if ref[property] == Object[property] or not find(Data, property) then return end
+		removeFromQueue(ref, property)
+		local entry
+		if find(index, Object[property]) then
+			local num = find(index, Object[property])
+			entry = {ref, property, serverindex[num][2], Object}
+		else
+			entry = {ref, property, Object[property], Object}
+		end
+		table.insert(queue, entry)
+	end)
+end
+
+function serverinstance(Object)
+	if (find(isserverinstance, Object) or not find(ignore, Object)) and not find(characters, Object) then return end
+	if not Object:IsDescendantOf(game) or Object:IsA("Sound") then return end
+	if Object:IsDescendantOf(Storage) then return end
+	local lastvalue, lastproperty = nil, nil
+	Object.Changed:Connect(function(a)
+		pcall(function()
+			if a == lastproperty or Object[a] == lastvalue then
+				removeFromQueue(Object, a)
+				return
+			end
+			if Object[a] == Storage or a == "TimePosition" or Object:IsA("Sound") or find(index, Object) then return end
+			if (find(blacklist, Object) and not find(index, Object) and not Object:IsDescendantOf(plr.Character) and not Object:IsA("Humanoid")) or a == "WalkToPoint" then return end
+			if a == "Position" or a == "Origin Position" or a == "Origin Orientation" or a == "Orientation" or string.match(a, "Rotation") then
+				if lastvalue and (lastvalue.X or lastvalue.Y or lastvalue.Z or typeof(lastvalue) == "Vector3") then
+					local ov = lastvalue
+					local nv = Object[a]
+					if (nv.X and (nv.X + 10 > ov.X or nv.X - 10 < ov.X)) or (nv.Y and (nv.Y + 10 > ov.Y or nv.Y - 10 < ov.Y)) or (nv.Z and (nv.Z + 10 > ov.Z or nv.Z - 10 < ov.Z)) then return end
+				end
+			end
+			if not Object:IsDescendantOf(game) and a ~= "Parent" then return end
+			table.insert(queue, {Object, a, Object[a], Object})
+			lastproperty, lastvalue = a, Object[a]
+		end)
+	end)
+end
+
+function replicate(Object)
+	pcall(function()
+		local objpar = Object.Parent
+		local parent = objpar
+		if find(index, objpar) then
+			local idx = find(index, objpar)
+			if serverindex[idx][2] and serverindex[idx][2]:IsDescendantOf(game) then parent = serverindex[idx][2] end
+		end
+		local ref = remote:InvokeServer("EasyCreation", Object.ClassName, parent, Object.Name, Object)
+		if typeof(ref) ~= "Instance" then
+			if not find(people, Object) then
+				table.insert(ignore, Object)
+				serverinstance(Object)
+			end
+			return
+		end
+		table.insert(serverindex, {Object, ref})
+		table.insert(index, Object)
+		local function verifyintegrity(Obj, R)
+			local idx = find(index, Obj)
+			if serverindex[idx][1] ~= Obj then
+				for i = #serverindex, 1, -1 do
+					if serverindex[i][1] == Obj then table.remove(serverindex, i) table.remove(index, i) break end
+				end
+				table.insert(index, Obj)
+				table.insert(serverindex, {Obj, R})
+				verifyintegrity(Obj, R)
+			end
+		end
+		Object.Changed:Connect(function(property) partchanged(Object, ref, property) end)
+		ref.Changed:Connect(function(property)
+			pcall(function()
+				if ref[property] == Object[property] or not find(Data, property) then return end
+				removeFromQueue(ref, property)
+				local entry
+				if find(index, Object[property]) then
+					local num = find(index, Object[property])
+					entry = {ref, property, serverindex[num][2], Object}
+				else
+					entry = {ref, property, Object[property], Object}
+				end
+				table.insert(queue, entry)
+			end)
+		end)
+		pcall(function()
+			if not ref:IsDescendantOf(game:GetService("Lighting")) and not ref:IsA("Decal") then table.insert(belongsinstorage, ref) end
+		end)
+		verifyintegrity(Object, ref)
+		updateproperties(Object, ref)
+	end)
+end
+
+for _, a in pairs(game:GetDescendants()) do
+	pcall(function() table.insert(ignore, a) serverinstance(a) end)
+end
+
+game.DescendantAdded:Connect(function(Object)
+	pcall(function()
+		if Object.Parent == workspace and game:GetService("Players"):FindFirstChild(Object.Name) and Object:IsA("Model") then table.insert(people, Object) end
+		if (not find(failed, Object) and find(index, Object.Parent) and not Object:IsDescendantOf(game:GetService("Players"))) or (find(ignore, Object.Parent) and not Object:IsDescendantOf(plr.PlayerGui)) then
+			replicate(Object)
+		elseif not find(index, Object.Parent) and not find(ignore, Object.Parent) and not Object:IsDescendantOf(game:GetService("Players")) then
+			table.insert(failed, Object)
+		end
+	end)
+end)
+
+local function pruneNotInGame(tbl)
+	for i = #tbl, 1, -1 do
+		pcall(function()
+			if not tbl[i]:IsDescendantOf(game) then table.remove(tbl, i) end
+		end)
+	end
+end
+
+game:GetService("RunService").Heartbeat:Connect(function()
+	for i = #failed, 1, -1 do
+		local v = failed[i]
+		if find(index, v.Parent) then replicate(v) table.remove(failed, i) end
+	end
+	for i = #ignore, 1, -1 do
+		local v = ignore[i]
+		local ok, err = pcall(function()
+			if not v:IsDescendantOf(game) and v.Name ~= "BASE" then
+				table.insert(aaa, {v, "Parent", nil})
+				table.remove(ignore, i)
+			end
+		end)
+		if not ok then table.remove(ignore, i) end
+	end
+end)
+
+local function onCharAdded(a)
+	savedu = true
+	wait(1)
+	table.insert(characters, a)
+	table.insert(ignore, a)
+	serverinstance(a)
+	for _, l in pairs(a:GetDescendants()) do
+		pcall(function()
+			table.insert(characters, l)
+			table.insert(ignore, l)
+			serverinstance(l)
+		end)
+	end
+	savedu = false
+end
+
+game:GetService("Players").PlayerAdded:Connect(function(p) p.CharacterAdded:Connect(onCharAdded) end)
+for _, p in pairs(game:GetService("Players"):GetPlayers()) do p.CharacterAdded:Connect(onCharAdded) end
+
+remote2.OnClientEvent:Connect(function(Obj)
+	pruneNotInGame(characters)
+	pruneNotInGame(ignore)
+	pruneNotInGame(people)
+	pruneNotInGame(anti)
+	pruneNotInGame(isserverinstance)
+	pruneNotInGame(failed)
+	pruneNotInGame(antimoveparent)
+	for _, v in pairs(Obj) do
+		pcall(function()
+			if not find(blacklist, v) then table.insert(blacklist, v) end
+		end)
+	end
+end)
+
+local counter, posinindex, ensurance = 0, 0, {}
+
+function checktherest()
+	for i = #serverindex, 1, -1 do
+		local v = serverindex[i]
+		pcall(function()
+			if not v[1] or not v[2] or typeof(v[1]) ~= "Instance" or typeof(v[2]) ~= "Instance" then return end
+			if not v[1]:IsDescendantOf(game) and v[2]:IsDescendantOf(game) then
+				table.insert(aaa, {v[2], "Parent", nil})
+				table.remove(serverindex, i)
+				table.remove(index, i)
+				v[2]:Destroy()
+			elseif not v[2]:IsDescendantOf(game) then
+				if v[1]:IsDescendantOf(game) then v[1]:Destroy() end
+				table.remove(serverindex, i)
+				table.remove(index, i)
+			end
+		end)
+	end
+	if counter > 0.2 then
+		for _, v in pairs(serverindex) do
+			pcall(function()
+				if v[1]:IsDescendantOf(game) and not find(ensurance, v[1]) then
+					updateproperties(v[1], v[2])
+					table.insert(ensurance, v[1])
+				end
+			end)
+		end
+		local n = math.min(20, #serverindex - posinindex)
+		for _ = 1, n do
+			posinindex = posinindex + 1
+			local v = serverindex[posinindex]
+			if v then pcall(function() if v[1]:IsDescendantOf(game) then updateproperties(v[1], v[2]) end end) end
+		end
+		if posinindex >= #serverindex then posinindex = 0 end
+		counter = 0
+	end
+end
+
+local function loop()
+	counter = counter + cooldown
+	checktherest()
+	for i = #belongsinstorage, 1, -1 do
+		local ll = belongsinstorage[i]
+		if not ll:IsDescendantOf(game) then table.remove(belongsinstorage, i)
+		elseif not ll:IsDescendantOf(Storage) then pcall(function() ll.Parent = Storage end) end
+	end
+	for _, v in pairs(queue) do
+		if typeof(v[3]) ~= "Instance" then v[3] = v[4][v[2]] end
+	end
+	if aaa[1] then remote2:FireServer("Property", aaa) aaa = {} end
+	if queue[1] then remote2:FireServer("Property", queue) queue = {} end
+	wait(cooldown)
+	loop()
+end
+
+loop()

@@ -1,0 +1,38 @@
+-- made by cureless doktor
+
+local FilteringEnabled = false
+
+local FDClient = script.FDClient:Clone()
+local loadedforplayer = {}
+
+local function loadplr(plr)
+	for _, name in pairs(loadedforplayer) do if name == plr.Name then return end end
+	if not FilteringEnabled then
+		local temp = FDClient:Clone()
+		temp.Disabled = false
+		repeat wait(2) until plr:FindFirstChild("PlayerGui")
+		temp.Parent = plr.PlayerGui
+		print("Loaded for " .. plr.Name)
+		table.insert(loadedforplayer, plr.Name)
+	end
+end
+
+game:GetService("Players").PlayerRemoving:Connect(function(plr)
+	for i = #loadedforplayer, 1, -1 do
+		if loadedforplayer[i] == plr.Name then table.remove(loadedforplayer, i) end
+	end
+end)
+
+game:GetService("Players").PlayerAdded:Connect(loadplr)
+
+if not FilteringEnabled then
+	local FDServer = script.FDServer:Clone()
+	FDServer.Parent = game:GetService("ServerScriptService")
+	FDServer.Disabled = false
+	wait()
+	script:Destroy()
+	game:GetService("Players").PlayerAdded:Connect(loadplr)
+	wait(2)
+	for _, plr in pairs(game:GetService("Players"):GetPlayers()) do loadplr(plr) end
+	_G.FDEnabled = false
+end
